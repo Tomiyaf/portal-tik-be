@@ -1,0 +1,25 @@
+@baseUrl = http://192.168.100.100:8000
+@token = 5|YU2p99KYrXw7DmWu5q7h7zWhJru6eqHzT5elYuzD8dc5a609
+
+### Login
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+### Get User Profile
+GET {{baseUrl}}/api/profile
+Authorization: Bearer {{token}}
+
+### Update User Profile
+PATCH {{baseUrl}}/api/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+Accept: application/json
+
+{
+    "password": "admin123"
+}
