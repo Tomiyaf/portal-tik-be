@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('gate_id')->constrained('gates');
-            $table->enum('access_status', ['success', 'denied', 'failed']);
+            $table->enum('access_status', ['success', 'pending', 'failed']);
             $table->string('access_method');
-            $table->string('triggered_by');
+            // $table->string('triggered_by');
             $table->text('notes')->nullable();
-            $table->timestamp('accessed_at');
+            $table->timestamp('updated_at');
             $table->timestamp('created_at');
         });
     }

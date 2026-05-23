@@ -19,6 +19,57 @@ services:
       - laravel
 
 
+  queue:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: portal_tik_queue
+
+    working_dir: /var/www
+
+    volumes:
+      - .:/var/www
+
+    env_file:
+      - .env
+
+    command: php artisan queue:work --sleep=1 --tries=3 --timeout=30
+
+    depends_on:
+      - app
+      - mysql
+      - mqtt
+
+    networks:
+      - laravel
+
+
+  mqtt_listener:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+
+    container_name: portal_tik_mqtt_listener
+
+    working_dir: /var/www
+
+    volumes:
+      - .:/var/www
+
+    env_file:
+      - .env
+
+    command: php artisan mqtt:listen-access-status
+
+    depends_on:
+      - app
+      - mqtt
+
+    networks:
+      - laravel
+
+
   nginx:
     image: nginx:alpine
 
@@ -72,6 +123,24 @@ services:
     volumes:
       - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
 
+    networks:
+      - laravel
+
+  
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: portal_tik_mediamtx
+    env_file:
+      - .env
+    environment:
+      MTX_PATHS_GATE1_SOURCE: publisher
+    ports:
+      - "8554:8554"
+      - "8889:8889"
+      - "8189:8189/udp"
+      - "8888:8888"
+    # volumes:
+    #   - ./docker/mediamtx/mediamtx.yml:/mediamtx.yml
     networks:
       - laravel
 

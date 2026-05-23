@@ -11,7 +11,7 @@ class MqttService
     {
         $host = config('mqtt.host');
         $port = (int) config('mqtt.port');
-        $clientId = config('mqtt.client_id_prefix') . bin2hex(random_bytes(4));
+        $clientId = config('mqtt.client_id') ?: config('mqtt.client_id_prefix') . bin2hex(random_bytes(4));
 
         $settings = (new ConnectionSettings())
             ->setUsername(config('mqtt.username'))

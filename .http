@@ -1,5 +1,6 @@
-@baseUrl = http://192.168.100.100:8000
-@token = 5|YU2p99KYrXw7DmWu5q7h7zWhJru6eqHzT5elYuzD8dc5a609
+@baseUrl = http://localhost:8000
+@token = 1|OFZTOMAEppQ8OGYdJWDtPPskuUHqcLj9KZzBq9PY3af59ef1
+@auth = Authorization: Bearer {{token}}
 
 ### Login
 POST {{baseUrl}}/api/auth/login
@@ -13,6 +14,7 @@ Content-Type: application/json
 ### Get User Profile
 GET {{baseUrl}}/api/profile
 Authorization: Bearer {{token}}
+Accept: application/json
 
 ### Update User Profile
 PATCH {{baseUrl}}/api/profile
@@ -21,5 +23,21 @@ Content-Type: application/json
 Accept: application/json
 
 {
-    "password": "admin123"
+    "password": "admin1"
 }
+
+### Open Gate
+POST {{baseUrl}}/api/gate/open
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "gate_id": 1,
+    "access_method": "mobile_app",
+    "notes": "Testing open gate"
+}
+
+### Close Gate
+POST {{baseUrl}}/api/gate/close
+{{auth}}
