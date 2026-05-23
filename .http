@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:8000
-@token = 1|OFZTOMAEppQ8OGYdJWDtPPskuUHqcLj9KZzBq9PY3af59ef1
+@token = 2|Y7DiEO0eHsfMCjromt7SfBxjcculF3H2hJR05BeBe12d9c00
 @auth = Authorization: Bearer {{token}}
 
 ### Login

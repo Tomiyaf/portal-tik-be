@@ -25,20 +25,31 @@ Artisan::command('mqtt:listen-access-status', function () {
         ->setUseTls(false);
 
     $this->info("Listening to MQTT topic: {$topic}");
+    fwrite(STDOUT, "[mqtt] starting listener for {$topic}\n");
+    fflush(STDOUT);
 
     while (true) {
         try {
-            $clientId = config('mqtt.client_id') ?: config('mqtt.client_id_prefix') . bin2hex(random_bytes(4));
+            $baseClientId = config('mqtt.client_id') ?: config('mqtt.client_id_prefix') . 'listener-';
+            $clientId = $baseClientId . bin2hex(random_bytes(4));
             $client = new MqttClient($host, $port, $clientId);
             $client->connect($settings, true);
+            fwrite(STDOUT, "[mqtt] connected as {$clientId}\n");
+            fflush(STDOUT);
 
             $client->subscribe($topic, function (string $topic, string $message): void {
                 $payload = json_decode($message, true);
 
                 if (!is_array($payload)) {
                     Log::warning('MQTT access status payload is invalid JSON.', ['message' => $message]);
+                    fwrite(STDOUT, "[mqtt] invalid JSON: {$message}\n");
+                    fflush(STDOUT);
                     return;
                 }
+
+                Log::info('MQTT access status received.', ['payload' => $payload]);
+                fwrite(STDOUT, '[mqtt] received: ' . $message . "\n");
+                fflush(STDOUT);
 
                 $accessLogId = $payload['access_log_id'] ?? $payload['request_id'] ?? null;
                 $status = $payload['status'] ?? null;
@@ -46,12 +57,20 @@ Artisan::command('mqtt:listen-access-status', function () {
 
                 if (!$accessLogId || !$status) {
                     Log::warning('MQTT access status missing fields.', ['payload' => $payload]);
+                    fwrite(STDOUT, '[mqtt] missing fields: ' . json_encode($payload) . "\n");
+                    fflush(STDOUT);
                     return;
+                }
+
+                if (is_numeric($accessLogId)) {
+                    $accessLogId = (int) $accessLogId;
                 }
 
                 $accessLog = AccessLog::find($accessLogId);
                 if (!$accessLog) {
                     Log::warning('Access log not found for MQTT status.', ['access_log_id' => $accessLogId]);
+                    fwrite(STDOUT, "[mqtt] access_log not found: {$accessLogId}\n");
+                    fflush(STDOUT);
                     return;
                 }
 
@@ -66,13 +85,25 @@ Artisan::command('mqtt:listen-access-status', function () {
                     $accessLog->notes = $notes;
                 }
                 $accessLog->save();
+
+                Log::info('Access log updated from MQTT.', [
+                    'access_log_id' => $accessLog->id,
+                    'status' => $accessLog->access_status,
+                ]);
+                fwrite(STDOUT, "[mqtt] updated access_log_id={$accessLog->id} status={$accessLog->access_status}\n");
+                fflush(STDOUT);
             }, 0);
+
+            fwrite(STDOUT, "[mqtt] subscribed to {$topic}\n");
+            fflush(STDOUT);
 
             $client->loop(true);
         } catch (\Throwable $exception) {
             Log::warning('MQTT listener disconnected. Reconnecting...', [
                 'error' => $exception->getMessage(),
             ]);
+            fwrite(STDOUT, "[mqtt] reconnecting after error: {$exception->getMessage()}\n");
+            fflush(STDOUT);
             sleep(2);
         }
     }
