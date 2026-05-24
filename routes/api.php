@@ -27,6 +27,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/access-logs', [AccessLogController::class, 'index']);
+	Route::get('/access-logs/latest-successful', [AccessLogController::class, 'latestSuccessful']);
 });
 
 Route::post('/test', [TestController::class, 'index']);
