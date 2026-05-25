@@ -36,9 +36,11 @@ class GateController extends Controller
 
         return response()->json([
             'success' => true,
-            'action' => 'open',
-            'opened_at' => now(),
-            'access_log_id' => $accessLog->id,
+            'data' => [
+                'action' => 'open',
+                'opened_at' => now(),
+                'access_log_id' => $accessLog->id,
+            ],
         ]);
     }
 
@@ -68,9 +70,11 @@ class GateController extends Controller
 
         return response()->json([
             'success' => true,
-            'action' => 'close',
-            'closed_at' => now(),
-            'access_log_id' => $accessLog->id,
+            'data' => [
+                'action' => 'close',
+                'closed_at' => now(),
+                'access_log_id' => $accessLog->id,
+            ],
         ]);
     }
 }

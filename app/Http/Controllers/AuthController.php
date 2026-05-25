@@ -21,6 +21,7 @@ class AuthController extends Controller
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
+                'data'    => null,
                 'message' => 'Invalid credentials.',
             ], 401);
         }
@@ -28,6 +29,7 @@ class AuthController extends Controller
         if ($user->status !== 'active') {
             return response()->json([
                 'success' => false,
+                'data'    => null,
                 'message' => 'Account is not active.',
             ], 403);
         }
@@ -40,9 +42,11 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user,
+            'data' => [
+                'token' => $token,
+                'token_type' => 'Bearer',
+                'user' => $user,
+            ],
         ]);
     }
 
@@ -56,6 +60,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
+            'data' => null,
             'message' => 'Logged out.',
         ]);
     }
@@ -64,7 +69,7 @@ class AuthController extends Controller
     {
         return response()->json([
             'success' => true,
-            'user' => $request->user(),
+            'data' => $request->user(),
         ]);
     }
 }
