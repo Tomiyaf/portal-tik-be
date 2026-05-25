@@ -15,7 +15,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => $user,
+            'data' => $user,
         ]);
     }
 
@@ -44,7 +44,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'user' => $user,
+            'data' => $user,
         ]);
     }
 }
