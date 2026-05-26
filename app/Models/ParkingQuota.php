@@ -16,9 +16,9 @@ class ParkingQuota extends Model
     protected $fillable = [
         'total_slots',
         'used_slots',
-        'status',
+        // 'status',
         'auto_restrict_student',
-        'updated_by',
+        // 'updated_by',
         'updated_at',
     ];
 
