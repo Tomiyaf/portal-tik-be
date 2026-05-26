@@ -50,6 +50,34 @@ class AuthController extends Controller
         ]);
     }
 
+    public function register (Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'full_name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'npm_nip' => ['required', 'string', 'max:50', 'unique:users,npm_nip'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'ktm' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $ktmPath = $request->file('ktm')->store('ktm');
+
+        $user = User::create([
+            'full_name' => $validated['full_name'],
+            'email' => $validated['email'],
+            'npm_nip' => $validated['npm_nip'],
+            'password' => Hash::make($validated['password']),
+            'role' => 'mahasiswa',
+            'status' => 'pending',
+            'ktm_path' => $ktmPath,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $user,
+        ], 201);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $user = $request->user();
