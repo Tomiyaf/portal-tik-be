@@ -16,10 +16,11 @@ class AccessLogController extends Controller
         ]);
     }
 
-    public function latestSuccessful(Request $request)
+    public function lastOpened(Request $request)
     {
         $latestLog = $request->user()->accessLogs()
             ->where('access_status', 'success')
+            ->where('action', ['open', 'entry'])
             ->with('gate:id,gate_name', 'user:id,full_name,role')
             ->latest()
             ->first();
