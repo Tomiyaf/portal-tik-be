@@ -21,6 +21,7 @@ use Laravel\Sanctum\HasApiTokens;
     'role',
     'status',
     'profile_photo',
+    'ktm_path',
     'last_login_at',
 ])]
 #[Hidden(['password'])]

@@ -15,6 +15,7 @@ class AccessLog extends Model
         'gate_id',
         'access_status',
         'access_method',
+        'action',
         'notes',
     ];
 

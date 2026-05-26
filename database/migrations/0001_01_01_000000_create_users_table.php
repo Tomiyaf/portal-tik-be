@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('npm_nip')->unique();
-            $table->string('phone_number');
+            $table->string('phone_number')->nullable();
             $table->enum('role', ['admin', 'staff', 'mahasiswa']);
             $table->enum('status', ['pending', 'active', 'suspended']);
             $table->string('profile_photo')->nullable();
+            $table->string('ktm_path')->nullable();
             $table->timestamp('last_login_at')->nullable();
             $table->timestamps();
         });

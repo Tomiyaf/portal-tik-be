@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->integer('total_slots');
             $table->integer('used_slots');
-            $table->enum('status', ['available', 'nearly_full', 'full']);
+            // $table->enum('status', ['available', 'nearly_full', 'full']);
             $table->boolean('auto_restrict_student');
-            $table->foreignId('updated_by')->constrained('users');
+            // $table->foreignId('updated_by')->constrained('users');
             $table->timestamp('updated_at');
         });
     }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('access_status', ['success', 'pending', 'failed']);
             $table->string('access_method');
             // $table->string('triggered_by');
+            $table->enum('action', ['open', 'close', 'entry', 'exit']);
             $table->text('notes')->nullable();
             $table->timestamp('updated_at');
             $table->timestamp('created_at');

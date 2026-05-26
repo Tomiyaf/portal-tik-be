@@ -17,8 +17,8 @@ return new class extends Migration
             $table->decimal('latitude', 10, 8);
             $table->decimal('longitude', 11, 8);
             $table->integer('allowed_radius_meter');
-            $table->enum('current_status', ['open', 'closed', 'opening', 'offline']);
-            $table->boolean('is_active');
+            // $table->enum('current_status', ['open', 'closed', 'opening', 'offline']);
+            // $table->boolean('is_active');
             $table->timestamps();
         });
     }
