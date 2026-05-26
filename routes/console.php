@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Log;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\MqttClient;
 use App\Models\AccessLog;
+use App\Models\ParkingQuota;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -74,6 +75,7 @@ Artisan::command('mqtt:listen-access-status', function () {
                     return;
                 }
 
+                $previousStatus = $accessLog->access_status;
                 $normalizedStatus = $status === 'success' ? 'success' : 'failed';
 
                 if ($normalizedStatus === 'failed' && $accessLog->access_status !== 'pending') {
@@ -85,6 +87,20 @@ Artisan::command('mqtt:listen-access-status', function () {
                     $accessLog->notes = $notes;
                 }
                 $accessLog->save();
+
+                if ($previousStatus !== 'success' && $normalizedStatus === 'success') {
+                    $quota = ParkingQuota::first();
+
+                    if ($quota) {
+                        if ($accessLog->action === 'entry') {
+                            $quota->increment('used_slots');
+                        }
+
+                        if ($accessLog->action === 'exit' && $quota->used_slots > 0) {
+                            $quota->decrement('used_slots');
+                        }
+                    }
+                }
 
                 Log::info('Access log updated from MQTT.', [
                     'access_log_id' => $accessLog->id,
