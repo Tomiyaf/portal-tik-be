@@ -39,7 +39,7 @@ class GateController extends Controller
     public function getMain(): JsonResponse
     {
         try {
-            $gate = Gate::first();
+            $gate = Gate::with('iotDevices')->first();
 
             return response()->json([
                 'success' => true,

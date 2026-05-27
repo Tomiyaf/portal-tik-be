@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use App\Models\Gate;
 use App\Models\Cctv;
+use App\Models\IotDevice;
 use App\Models\ParkingQuota;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -82,6 +83,15 @@ class DatabaseSeeder extends Seeder
             'camera_name' => 'Main Gate Camera',
             'stream_url' => 'http://localhost:8554/gate1',
             'is_active' => true,
+        ]);
+
+        IotDevice::create([
+            'device_name' => 'ESP8266 Gate 1',
+            'device_uid' => 'ESP8266-GATE1-001',
+            'gate_id' => 1,
+            'firmware_version' => 'v1.0.0',
+            'status' => 'online',
+            'last_online_at' => now()
         ]);
     }
 }
