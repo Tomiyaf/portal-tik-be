@@ -4,9 +4,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\GateController;
-use App\Http\Controllers\TestController;
 use App\Http\Controllers\AccessLogController;
 use App\Http\Controllers\ParkingQuotaController;
+use App\Http\Controllers\CctvController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -21,6 +21,8 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('gate')->group(function () {
+        Route::get('/main', [GateController::class, 'getMain']);
+
         Route::middleware('role:admin,staff')->group(function () {
             Route::post('/open', [GateController::class, 'open']);
             Route::post('/close', [GateController::class, 'close']);
@@ -41,6 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('parking-quota')->group(function () {
         Route::get('/', [ParkingQuotaController::class, 'show']);
         Route::patch('/', [ParkingQuotaController::class, 'update'])->middleware('role:admin,staff');
+    });
+
+    Route::prefix("cctv")->group(function () {
+        Route::get('/main', [CctvController::class, 'getMain']);
     });
 
     // User management (admin/staff only)
