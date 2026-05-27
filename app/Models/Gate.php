@@ -15,8 +15,8 @@ class Gate extends Model
         'latitude',
         'longitude',
         'allowed_radius_meter',
-        'current_status',
-        'is_active',
+        // 'current_status',
+        // 'is_active',
     ];
 
     protected $casts = [
