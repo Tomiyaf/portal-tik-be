@@ -46,7 +46,7 @@ class UserController extends Controller
 
         // Pagination
         $perPage = $request->integer('per_page', 15);
-        $users = $query->orderByDesc('id')->paginate($perPage);
+        $users = $query->orderBy('id')->paginate($perPage);
 
         return response()->json([
             'success' => true,
