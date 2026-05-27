@@ -39,7 +39,7 @@ class GateController extends Controller
     public function getMain(): JsonResponse
     {
         try {
-            $gate = Gate::first();
+            $gate = Gate::with('iotDevices')->first();
 
             return response()->json([
                 'success' => true,
@@ -93,7 +93,7 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', Rule::in(['mobile', 'web'])],
+            'access_method' => ['required', Rule::in(['mobile', 'web', 'desktop'])],
             'notes' => ['nullable', 'string'],
         ]);
 
