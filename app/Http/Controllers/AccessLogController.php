@@ -12,7 +12,7 @@ class AccessLogController extends Controller
     {
         $request->validate([
         'access_status' => ['sometimes', Rule::in(['success', 'pending', 'failed'])],
-        'access_method' => ['sometimes', Rule::in(['mobile', 'web'])],
+        'access_method' => ['sometimes', Rule::in(['mobile', 'web', 'desktop'])],
         'action' => ['sometimes', Rule::in(['open', 'close', 'entry', 'exit'])],
         'sort_order' => ['sometimes', Rule::in(['asc', 'desc'])],
         'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],

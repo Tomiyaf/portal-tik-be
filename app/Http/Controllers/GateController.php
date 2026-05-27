@@ -93,7 +93,7 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', Rule::in(['mobile', 'web'])],
+            'access_method' => ['required', Rule::in(['mobile', 'web', 'desktop'])],
             'notes' => ['nullable', 'string'],
         ]);
 
