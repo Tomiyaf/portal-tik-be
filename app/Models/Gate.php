@@ -20,8 +20,8 @@ class Gate extends Model
     ];
 
     protected $casts = [
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
+        'latitude' => 'double',
+        'longitude' => 'double',
         'is_active' => 'boolean',
     ];
 
