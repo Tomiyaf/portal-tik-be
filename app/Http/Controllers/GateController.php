@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\FailAccessLogAfterTimeout;
+use App\Models\Gate;
 use App\Models\AccessLog;
 use App\Models\ParkingQuota;
 use App\Services\MqttService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class GateController extends Controller
 {
@@ -38,30 +40,9 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', 'string', 'max:255'],
+            'access_method' => ['required', Rule::in(['mobile', 'web'])],
             'notes' => ['nullable', 'string'],
         ]);
-
-        if ($request->user()->role == 'mahasiswa'){
-            $parkingQuota = ParkingQuota::first();
-            $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
-            if ($availableSlots <= 0) {
-                AccessLog::create([
-                    'user_id' => $request->user()->id,
-                    'gate_id' => $validated['gate_id'],
-                    'access_status' => 'failed',
-                    'access_method' => $validated['access_method'],
-                    'action' => 'open',
-                    'notes' => 'Parking quota is full. Access denied.',
-                ]);
-                
-                return response()->json([
-                    'success' => false,
-                    'data' => null,
-                    'message' => 'Parking quota is full. Access denied.',
-                ], 403);
-            }
-        }
 
         $accessLog = AccessLog::create([
             'user_id' => $request->user()->id,
@@ -94,7 +75,7 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', 'string', 'max:255'],
+            'access_method' => ['required', Rule::in(['mobile', 'web'])],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -129,7 +110,7 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', 'string', 'max:255'],
+            'access_method' => ['required', Rule::in(['mobile', 'web'])],
             'notes' => ['nullable', 'string'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
@@ -210,7 +191,7 @@ class GateController extends Controller
     {
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', 'string', 'max:255'],
+            'access_method' => ['required', Rule::in(['mobile', 'web'])],
             'notes' => ['nullable', 'string'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],

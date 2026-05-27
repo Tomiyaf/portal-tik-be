@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users');
             $table->foreignId('gate_id')->constrained('gates');
             $table->enum('access_status', ['success', 'pending', 'failed']);
-            $table->string('access_method');
+            $table->enum('access_method', ['mobile', 'web']);
             // $table->string('triggered_by');
             $table->enum('action', ['open', 'close', 'entry', 'exit']);
             $table->text('notes')->nullable();
