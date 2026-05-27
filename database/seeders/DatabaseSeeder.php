@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Gate;
+use App\Models\Cctv;
 use App\Models\ParkingQuota;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -75,6 +76,12 @@ class DatabaseSeeder extends Seeder
             'allowed_radius_meter' => 100,
             // 'current_status' => 'closed',
             // 'is_active' => true,
+        ]);
+
+        Cctv::create([
+            'camera_name' => 'Main Gate Camera',
+            'stream_url' => 'http://localhost:8554/gate1',
+            'is_active' => true,
         ]);
     }
 }

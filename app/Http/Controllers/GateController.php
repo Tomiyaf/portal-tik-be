@@ -36,6 +36,24 @@ class GateController extends Controller
         return $earthRadius * $c;
     }
 
+    public function getMain(): JsonResponse
+    {
+        try {
+            $gate = Gate::first();
+
+            return response()->json([
+                'success' => true,
+                'data' => $gate,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'data' => null,
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function open(Request $request, MqttService $mqtt): JsonResponse
     {
         $validated = $request->validate([
