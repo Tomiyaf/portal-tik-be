@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\GateAccessRequested;
 use App\Jobs\FailAccessLogAfterTimeout;
 use App\Models\Gate;
 use App\Models\AccessLog;
@@ -77,7 +78,12 @@ class GateController extends Controller
         ]);
 
         $mqtt->publish(config('mqtt.topic_control'), $payload);
-        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+
+        GateAccessRequested::dispatch($accessLog);
+        logger("gate access request event dispatched");
+
+        FailAccessLogAfterTimeout::dispatch($accessLog->id)
+            ->delay(now()->addSeconds(5));
 
         return response()->json([
             'success' => true,
@@ -112,6 +118,10 @@ class GateController extends Controller
         ]);
 
         $mqtt->publish(config('mqtt.topic_control'), $payload);
+
+        GateAccessRequested::dispatch($accessLog);
+        logger("gate access request event dispatched");
+
         FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
 
         return response()->json([
@@ -193,6 +203,10 @@ class GateController extends Controller
         ]);
 
         $mqtt->publish(config('mqtt.topic_control'), $payload);
+
+        GateAccessRequested::dispatch($accessLog);
+        logger("gate access request event dispatched");
+
         FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
 
         return response()->json([
@@ -254,6 +268,10 @@ class GateController extends Controller
         ]);
 
         $mqtt->publish(config('mqtt.topic_control'), $payload);
+
+        GateAccessRequested::dispatch($accessLog);
+        logger("gate access request event dispatched");
+
         FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
 
         return response()->json([

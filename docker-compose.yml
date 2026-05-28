@@ -84,6 +84,7 @@ services:
 
     depends_on:
       - app
+      - reverb
 
     networks:
       - laravel
@@ -144,6 +145,23 @@ services:
     networks:
       - laravel
 
+  reverb:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: portal_tik_reverb
+    working_dir: /var/www
+    volumes:
+      - .:/var/www
+    env_file:
+      - .env
+    command: sh -c "sleep 15 && php artisan reverb:start --host=0.0.0.0 --port=8080"
+    depends_on:
+      - app
+      - mysql
+      - queue
+    networks:
+      - laravel
 
 volumes:
   mysql_data:
