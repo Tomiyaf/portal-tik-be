@@ -59,7 +59,20 @@ class DatabaseSeeder extends Seeder
                 'last_login_at' => null,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]
+            ],
+            [
+                'full_name' => 'John Doe',
+                'email' => 'staff@example.com',
+                'password' => Hash::make('staff123'),
+                'npm_nip' => 'STF001',
+                'phone_number' => '081234567893',
+                'role' => 'staff',
+                'status' => 'active',
+                'profile_photo' => null,
+                'last_login_at' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
         ]);
 
         ParkingQuota::create([
