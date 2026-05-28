@@ -35,10 +35,18 @@ class AccessLogController extends Controller
             $query->where('action', $request->action);
         }
         
-        $sortOrder = $request->get('sort_order', 'desc');
+        $sortOrder = $request->input('sort_order', 'desc');
         $query->orderBy('id', $sortOrder);
         $perPage = $request->integer('per_page', 15);
-        $accessLogs = $query->with('user:id,full_name,role')->paginate($perPage);
+        $accessLogs = $query
+            ->with('user:id,full_name,role')
+            ->with('gate:id,gate_name')
+            ->paginate($perPage);
+
+        $accessLogs
+            ->getCollection()
+            ->each
+            ->makeHidden(['gate_id', 'user_id']);
 
         return response()->json([
             'success' => true,
@@ -61,7 +69,8 @@ class AccessLogController extends Controller
             ->whereIn('action', ['open','entry'])
             ->with('gate:id,gate_name', 'user:id,full_name,role')
             ->latest()
-            ->first();
+            ->first()
+            ?->makeHidden(['gate_id', 'user_id']);
 
         return response()->json([
             'success' => true,
