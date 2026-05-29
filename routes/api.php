@@ -23,6 +23,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('gate')->group(function () {
         Route::get('/main', [GateController::class, 'getMain']);
 
+        Route::middleware('role:admin')->group(function () {
+            Route::patch('/', [GateController::class, 'update']);
+        });
+
         Route::middleware('role:admin,staff')->group(function () {
             Route::post('/open', [GateController::class, 'open']);
             Route::post('/close', [GateController::class, 'close']);
