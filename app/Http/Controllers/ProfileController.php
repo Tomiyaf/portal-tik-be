@@ -26,6 +26,7 @@ class ProfileController extends Controller
         $data = $request->validate([
             'full_name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'npm_nip' => ['sometimes', 'string', 'max:50', 'unique:users,npm_nip,' . $user->id],
             'phone_number' => ['sometimes', 'string', 'max:20'],
 
         ]);
