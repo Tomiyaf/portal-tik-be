@@ -7,6 +7,7 @@ use App\Http\Controllers\GateController;
 use App\Http\Controllers\AccessLogController;
 use App\Http\Controllers\ParkingQuotaController;
 use App\Http\Controllers\CctvController;
+use App\Http\Controllers\IotDeviceController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -64,6 +65,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [AccessLogController::class, 'index'])->middleware('role:admin,staff');
         Route::get('/last-opened', [AccessLogController::class, 'lastOpened']);
     });
-});
 
-Route::post('/test', [TestController::class, 'index']);
+    Route::prefix('iot-device')->group(function () {
+        Route::get('/', [IotDeviceController::class, 'show']);
+    });
+});

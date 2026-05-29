@@ -11,6 +11,8 @@ services:
 
     volumes:
       - .:/var/www
+
+    restart: unless-stopped
     
     env_file:
       - .env
@@ -35,6 +37,7 @@ services:
       - .env
 
     command: php artisan queue:work --sleep=1 --tries=3 --timeout=30
+    restart: unless-stopped
 
     depends_on:
       - app
@@ -60,11 +63,13 @@ services:
     env_file:
       - .env
 
-    command: php artisan mqtt:listen-access-status
+    command: php artisan mqtt:listen
+    restart: unless-stopped
 
     depends_on:
       - app
       - mqtt
+      - mysql
 
     networks:
       - laravel
@@ -84,6 +89,8 @@ services:
 
     depends_on:
       - app
+    
+    restart: unless-stopped
 
     networks:
       - laravel
@@ -122,6 +129,8 @@ services:
 
     volumes:
       - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    
+    restart: unless-stopped
 
     networks:
       - laravel
@@ -141,6 +150,7 @@ services:
       - "8888:8888"
     # volumes:
     #   - ./docker/mediamtx/mediamtx.yml:/mediamtx.yml
+    restart: unless-stopped
     networks:
       - laravel
 

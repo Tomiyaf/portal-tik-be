@@ -7,15 +7,18 @@ use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\MqttClient;
 use App\Models\AccessLog;
 use App\Models\ParkingQuota;
+use App\Models\IotDevice;
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Artisan::command('mqtt:listen-access-status', function () {
+Artisan::command('mqtt:listen', function () {
     $host = config('mqtt.host');
     $port = (int) config('mqtt.port');
-    $topic = config('mqtt.topic_status');
+
+    $accessTopic = config('mqtt.topic_access_status');
+    $deviceTopic = config('mqtt.topic_device_status');
 
     $settings = (new ConnectionSettings())
         ->setUsername(config('mqtt.username'))
@@ -25,53 +28,37 @@ Artisan::command('mqtt:listen-access-status', function () {
         ->setKeepAliveInterval((int) config('mqtt.keep_alive'))
         ->setUseTls(false);
 
-    $this->info("Listening to MQTT topic: {$topic}");
-    fwrite(STDOUT, "[mqtt] starting listener for {$topic}\n");
-    fflush(STDOUT);
-
     while (true) {
         try {
-            $baseClientId = config('mqtt.client_id') ?: config('mqtt.client_id_prefix') . 'listener-';
-            $clientId = $baseClientId . bin2hex(random_bytes(4));
+            $clientId = config('mqtt.client_id_prefix') . 'listener-' . bin2hex(random_bytes(4));
+
             $client = new MqttClient($host, $port, $clientId);
             $client->connect($settings, true);
-            fwrite(STDOUT, "[mqtt] connected as {$clientId}\n");
-            fflush(STDOUT);
 
-            $client->subscribe($topic, function (string $topic, string $message): void {
+            $this->info("MQTT connected as {$clientId}");
+
+            // 1. Listen hasil akses gate: success / failed
+            $client->subscribe($accessTopic, function (string $topic, string $message): void {
                 $payload = json_decode($message, true);
 
                 if (!is_array($payload)) {
-                    Log::warning('MQTT access status payload is invalid JSON.', ['message' => $message]);
-                    fwrite(STDOUT, "[mqtt] invalid JSON: {$message}\n");
-                    fflush(STDOUT);
+                    Log::warning('Invalid access status payload.', ['message' => $message]);
                     return;
                 }
-
-                Log::info('MQTT access status received.', ['payload' => $payload]);
-                fwrite(STDOUT, '[mqtt] received: ' . $message . "\n");
-                fflush(STDOUT);
 
                 $accessLogId = $payload['access_log_id'] ?? $payload['request_id'] ?? null;
                 $status = $payload['status'] ?? null;
                 $notes = $payload['notes'] ?? null;
 
                 if (!$accessLogId || !$status) {
-                    Log::warning('MQTT access status missing fields.', ['payload' => $payload]);
-                    fwrite(STDOUT, '[mqtt] missing fields: ' . json_encode($payload) . "\n");
-                    fflush(STDOUT);
+                    Log::warning('Access status missing fields.', ['payload' => $payload]);
                     return;
                 }
 
-                if (is_numeric($accessLogId)) {
-                    $accessLogId = (int) $accessLogId;
-                }
-
                 $accessLog = AccessLog::find($accessLogId);
+
                 if (!$accessLog) {
-                    Log::warning('Access log not found for MQTT status.', ['access_log_id' => $accessLogId]);
-                    fwrite(STDOUT, "[mqtt] access_log not found: {$accessLogId}\n");
-                    fflush(STDOUT);
+                    Log::warning('Access log not found.', ['access_log_id' => $accessLogId]);
                     return;
                 }
 
@@ -83,9 +70,11 @@ Artisan::command('mqtt:listen-access-status', function () {
                 }
 
                 $accessLog->access_status = $normalizedStatus;
+
                 if (is_string($notes) && $notes !== '') {
                     $accessLog->notes = $notes;
                 }
+
                 $accessLog->save();
 
                 if ($previousStatus !== 'success' && $normalizedStatus === 'success') {
@@ -105,26 +94,46 @@ Artisan::command('mqtt:listen-access-status', function () {
                         }
                     }
                 }
+            }, 1);
 
-                Log::info('Access log updated from MQTT.', [
-                    'access_log_id' => $accessLog->id,
-                    'status' => $accessLog->access_status,
-                ]);
-                fwrite(STDOUT, "[mqtt] updated access_log_id={$accessLog->id} status={$accessLog->access_status}\n");
-                fflush(STDOUT);
-            }, 0);
+            // 2. Listen status ESP: online / offline
+            $client->subscribe($deviceTopic, function (string $topic, string $message): void {
+                $payload = json_decode($message, true);
 
-            fwrite(STDOUT, "[mqtt] subscribed to {$topic}\n");
-            fflush(STDOUT);
+                if (!is_array($payload)) {
+                    Log::warning('Invalid device status payload.', ['message' => $message]);
+                    return;
+                }
+
+                $deviceUid = 'ESP8266-GATE1-001';
+                $status = $payload['status'] ?? null;
+
+                if (!in_array($status, ['online', 'offline'], true)) {
+                    Log::warning('Invalid device status.', ['payload' => $payload]);
+                    return;
+                }
+
+                $data = [
+                    'status' => $status,
+                ];
+
+                if ($status === 'online') {
+                    $data['last_online_at'] = now();
+                }
+
+                IotDevice::where('device_uid', $deviceUid)->update($data);
+            }, 1);
+
+            $this->info("Subscribed to {$accessTopic}");
+            $this->info("Subscribed to {$deviceTopic}");
 
             $client->loop(true);
         } catch (\Throwable $exception) {
             Log::warning('MQTT listener disconnected. Reconnecting...', [
                 'error' => $exception->getMessage(),
             ]);
-            fwrite(STDOUT, "[mqtt] reconnecting after error: {$exception->getMessage()}\n");
-            fflush(STDOUT);
+
             sleep(2);
         }
     }
-})->purpose('Listen to MQTT status updates and update access logs');
+})->purpose('Listen to MQTT access and device status');

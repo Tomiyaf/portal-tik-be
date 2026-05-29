@@ -14,7 +14,7 @@ class IotDevice extends Model
         'device_name',
         'device_uid',
         'gate_id',
-        'ip_address',
+        // 'ip_address',
         'firmware_version',
         'status',
         'last_online_at',

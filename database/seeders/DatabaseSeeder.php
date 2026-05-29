@@ -90,7 +90,7 @@ class DatabaseSeeder extends Seeder
             'device_uid' => 'ESP8266-GATE1-001',
             'gate_id' => 1,
             'firmware_version' => 'v1.0.0',
-            'status' => 'online',
+            'status' => 'offline',
             'last_online_at' => now()
         ]);
     }
