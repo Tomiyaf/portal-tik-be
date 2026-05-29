@@ -54,15 +54,95 @@ class GateController extends Controller
         }
     }
 
-    public function open(Request $request, MqttService $mqtt): JsonResponse
+    private function validateOpenClose(Request $request): array
     {
-        $validated = $request->validate([
+        return $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
             'access_method' => ['required', Rule::in(['mobile', 'web'])],
             'notes' => ['nullable', 'string'],
         ]);
+    }
 
-        $accessLog = AccessLog::create([
+    private function validateEntryExit(Request $request): array
+    {
+        return $request->validate([
+            'gate_id' => ['required', 'integer', 'exists:gates,id'],
+            'access_method' => ['required', Rule::in(['mobile', 'web'])],
+            'notes' => ['nullable', 'string'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
+            'longitude' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+    }
+
+    private function createAccessLog(array $data): AccessLog
+    {
+        return AccessLog::create($data);
+    }
+
+    private function publishAndQueue(AccessLog $accessLog, MqttService $mqtt, string $action): void
+    {
+        $payload = json_encode([
+            'access_log_id' => $accessLog->id,
+            'action' => $action,
+        ]);
+
+        $mqtt->publish(config('mqtt.topic_control'), $payload);
+        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+    }
+
+    private function failWithLog(
+        Request $request,
+        array $validated,
+        string $action,
+        string $notes,
+        string $message,
+        int $status = 403
+    ): JsonResponse {
+        $this->createAccessLog([
+            'user_id' => $request->user()->id,
+            'gate_id' => $validated['gate_id'],
+            'access_status' => 'failed',
+            'access_method' => $validated['access_method'],
+            'action' => $action,
+            'notes' => $notes,
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => $message,
+        ], $status);
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'gate_name' => 'sometimes|required|string|max:255',
+            'latitude' => 'sometimes|required|numeric|between:-90,90',
+            'longitude' => 'sometimes|required|numeric|between:-180,180',
+            'allowed_radius_meter' => 'sometimes|required|integer|min:0',
+        ]);
+
+        $gate = Gate::first();
+        if (!$gate) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gate not found.',
+            ], 404);
+        }
+
+        $gate->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $gate,
+        ]);
+    }
+
+    public function open(Request $request, MqttService $mqtt): JsonResponse
+    {
+        $validated = $this->validateOpenClose($request);
+
+        $accessLog = $this->createAccessLog([
             'user_id' => $request->user()->id,
             'gate_id' => $validated['gate_id'],
             'access_status' => 'pending',
@@ -71,13 +151,7 @@ class GateController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $payload = json_encode([
-            'access_log_id' => $accessLog->id,
-            'action' => 'open',
-        ]);
-
-        $mqtt->publish(config('mqtt.topic_control'), $payload);
-        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+        $this->publishAndQueue($accessLog, $mqtt, 'open');
 
         return response()->json([
             'success' => true,
@@ -97,7 +171,7 @@ class GateController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $accessLog = AccessLog::create([
+        $accessLog = $this->createAccessLog([
             'user_id' => $request->user()->id,
             'gate_id' => $validated['gate_id'],
             'access_status' => 'pending',
@@ -106,13 +180,7 @@ class GateController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $payload = json_encode([
-            'access_log_id' => $accessLog->id,
-            'action' => 'close',
-        ]);
-
-        $mqtt->publish(config('mqtt.topic_control'), $payload);
-        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+        $this->publishAndQueue($accessLog, $mqtt, 'close');
 
         return response()->json([
             'success' => true,
@@ -126,13 +194,24 @@ class GateController extends Controller
 
     public function entry(Request $request, MqttService $mqtt): JsonResponse
     {
-        $validated = $request->validate([
-            'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', Rule::in(['mobile', 'web'])],
-            'notes' => ['nullable', 'string'],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-        ]);
+        $validated = $this->validateEntryExit($request);
+
+        $lastMovement = AccessLog::where('user_id', $request->user()->id)
+            ->where('access_status', 'success')
+            ->whereIn('action', ['entry', 'exit'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($lastMovement && $lastMovement->action === 'entry') {
+            return $this->failWithLog(
+                $request,
+                $validated,
+                'entry',
+                'User already entered.',
+                'You have already entered.'
+            );
+        }
 
         $gate = Gate::findOrFail($validated['gate_id']);
         $distance = $this->calculateDistance(
@@ -143,42 +222,29 @@ class GateController extends Controller
         );
 
         if ($distance > $gate->allowed_radius_meter) {
-            AccessLog::create([
-                'user_id' => $request->user()->id,
-                'gate_id' => $validated['gate_id'],
-                'access_status' => 'failed',
-                'access_method' => $validated['access_method'],
-                'action' => 'entry',
-                'notes' => 'User is outside the allowed gate radius. Access denied.',
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'You are outside the allowed gate radius.',
-            ], 403);
+            return $this->failWithLog(
+                $request,
+                $validated,
+                'entry',
+                'User is outside the allowed gate radius. Access denied.',
+                'You are outside the allowed gate radius.'
+            );
         }
 
         $parkingQuota = ParkingQuota::first();
         $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
 
-        if ($availableSlots <= 0) {
-            AccessLog::create([
-                'user_id' => $request->user()->id,
-                'gate_id' => $validated['gate_id'],
-                'access_status' => 'failed',
-                'access_method' => $validated['access_method'],
-                'action' => 'entry',
-                'notes' => 'Parking quota is full. Access denied.',
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'data' => null,
-                'message' => 'Parking quota is full. Access denied.',
-            ], 403);
+        if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
+            return $this->failWithLog(
+                $request,
+                $validated,
+                'entry',
+                'Parking quota is full. Access denied.',
+                'Parking quota is full. Access denied.'
+            );
         }
 
-        $accessLog = AccessLog::create([
+        $accessLog = $this->createAccessLog([
             'user_id' => $request->user()->id,
             'gate_id' => $validated['gate_id'],
             'access_status' => 'pending',
@@ -187,13 +253,7 @@ class GateController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $payload = json_encode([
-            'access_log_id' => $accessLog->id,
-            'action' => 'open',
-        ]);
-
-        $mqtt->publish(config('mqtt.topic_control'), $payload);
-        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+        $this->publishAndQueue($accessLog, $mqtt, 'open');
 
         return response()->json([
             'success' => true,
@@ -207,13 +267,24 @@ class GateController extends Controller
 
     public function exit(Request $request, MqttService $mqtt): JsonResponse
     {
-        $validated = $request->validate([
-            'gate_id' => ['required', 'integer', 'exists:gates,id'],
-            'access_method' => ['required', Rule::in(['mobile', 'web'])],
-            'notes' => ['nullable', 'string'],
-            'latitude' => ['required', 'numeric', 'between:-90,90'],
-            'longitude' => ['required', 'numeric', 'between:-180,180'],
-        ]);
+        $validated = $this->validateEntryExit($request);
+
+        $lastMovement = AccessLog::where('user_id', $request->user()->id)
+            ->where('access_status', 'success')
+            ->whereIn('action', ['entry', 'exit'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if ($lastMovement && $lastMovement->action === 'exit') {
+            return $this->failWithLog(
+                $request,
+                $validated,
+                'exit',
+                'User already exited.',
+                'You have already exited.'
+            );
+        }
 
         $gate = Gate::findOrFail($validated['gate_id']);
         $distance = $this->calculateDistance(
@@ -224,22 +295,16 @@ class GateController extends Controller
         );
 
         if ($distance > $gate->allowed_radius_meter) {
-            AccessLog::create([
-                'user_id' => $request->user()->id,
-                'gate_id' => $validated['gate_id'],
-                'access_status' => 'failed',
-                'access_method' => $validated['access_method'],
-                'action' => 'exit',
-                'notes' => 'User is outside the allowed gate radius. Access denied.',
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'You are outside the allowed gate radius.',
-            ], 403);
+            return $this->failWithLog(
+                $request,
+                $validated,
+                'exit',
+                'User is outside the allowed gate radius. Access denied.',
+                'You are outside the allowed gate radius.'
+            );
         }
 
-        $accessLog = AccessLog::create([
+        $accessLog = $this->createAccessLog([
             'user_id' => $request->user()->id,
             'gate_id' => $validated['gate_id'],
             'access_status' => 'pending',
@@ -248,13 +313,7 @@ class GateController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $payload = json_encode([
-            'access_log_id' => $accessLog->id,
-            'action' => 'open',
-        ]);
-
-        $mqtt->publish(config('mqtt.topic_control'), $payload);
-        FailAccessLogAfterTimeout::dispatch($accessLog->id)->delay(now()->addSeconds(5));
+        $this->publishAndQueue($accessLog, $mqtt, 'open');
 
         return response()->json([
             'success' => true,

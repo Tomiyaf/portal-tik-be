@@ -93,11 +93,15 @@ Artisan::command('mqtt:listen-access-status', function () {
 
                     if ($quota) {
                         if ($accessLog->action === 'entry') {
-                            $quota->increment('used_slots');
+                            ParkingQuota::where('id', $quota->id)
+                                ->whereColumn('used_slots', '<', 'total_slots')
+                                ->increment('used_slots');
                         }
 
-                        if ($accessLog->action === 'exit' && $quota->used_slots > 0) {
-                            $quota->decrement('used_slots');
+                        if ($accessLog->action === 'exit') {
+                            ParkingQuota::where('id', $quota->id)
+                                ->where('used_slots', '>', 0)
+                                ->decrement('used_slots');
                         }
                     }
                 }
