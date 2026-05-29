@@ -21,7 +21,7 @@ class UserController extends Controller
         'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = User::query();
+        $query = User::query()->where('id', '!=', 1);
 
         // Filter by role
         if ($request->filled('role')) {
@@ -86,7 +86,7 @@ class UserController extends Controller
                 'role' => $user->role,
                 'status' => $user->status,
                 'profile_photo' => null,
-                'ktm_path' => $user->ktm_path ? url("/api/users/{$user->id}/ktm") : null,
+                'ktm_path' => $user->ktm_path ? "/api/users/{$user->id}/ktm" : null,
                 'last_login_at' => $user->last_login_at,
             ],
         ]);
@@ -124,20 +124,24 @@ class UserController extends Controller
             'email' => [
                 'sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)
             ],
-            'password' => 'sometimes|required|string|min:6',
+            'password' => 'nullable|string|min:8',
             'npm_nip' => [
                 'sometimes', 'required', Rule::unique('users')->ignore($user->id)
             ],
-            'phone_number' => 'nullable|string|max:20',
+            'phone_number' => 'sometimes|nullable|string|max:20',
             'role' => ['sometimes', 'required', Rule::in(['admin', 'staff', 'mahasiswa'])],
             'status' => ['sometimes', 'required', Rule::in(['pending', 'active', 'suspended'])],
-            'profile_photo' => 'nullable|string',
-            'ktm_path' => 'nullable|string',
-            'last_login_at' => 'nullable|date',
+            // 'profile_photo' => 'nullable|string',
+            'ktm_path' => 'sometimes|nullable|string',
+            // 'last_login_at' => 'nullable|date',
         ]);
-        if (isset($validated['password'])) {
+
+        if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
         }
+
         $user->update($validated);
         return response()->json([
             'success' => true,
@@ -155,6 +159,13 @@ class UserController extends Controller
                 'message' => 'User not found.'
             ], 404);
         }
+
+        if ($user->id === 1) {
+            return response()->json([
+                'message' => 'Super Admin cannot be deleted.'
+            ], 403);
+        }
+
         $user->delete();
         return response()->json([
             'success' => true,
