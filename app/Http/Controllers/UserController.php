@@ -174,13 +174,9 @@ class UserController extends Controller
     }
 
     public function previewKtm(User $user)
-    {
-        if (!$user->ktm_path || !Storage::exists($user->ktm_path)) {
-            return response()->json([
-                'success' => false,
-                'data' => null,
-                'message' => 'KTM not found.',
-            ], 404);
+    {   
+        if (!$user->ktm_path) {
+            return response()->noContent();
         }
 
         return response()->file(Storage::path($user->ktm_path), [

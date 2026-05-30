@@ -8,6 +8,8 @@ use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\AuthenticationException;
 use App\Http\Middleware\RoleMiddleware;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -47,6 +49,32 @@ return Application::configure(basePath: dirname(__DIR__))
                     'data' => null,
                     'message' => 'Unauthenticated.',
                 ], Response::HTTP_UNAUTHORIZED);
+            }
+        });
+
+        $exceptions->render(function (
+            NotFoundHttpException $e,
+            $request
+        ) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Resource not found.',
+                ], Response::HTTP_NOT_FOUND);
+            }
+        });
+
+        $exceptions->render(function (
+            Throwable $e,
+            $request
+        ) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'An unexpected error occurred.',
+                ], Response::HTTP_INTERNAL_SERVER_ERROR);
             }
         });
     })->create();
