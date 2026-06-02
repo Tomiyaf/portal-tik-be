@@ -72,8 +72,8 @@ class DatabaseSeeder extends Seeder
 
         Gate::create([
             'gate_name' => 'Gate 1',
-            'latitude' => -6.200000,
-            'longitude' => 106.816666,
+            'latitude' => -5.362724788161964,
+            'longitude' => 105.24102403915745,
             'allowed_radius_meter' => 100,
             // 'current_status' => 'closed',
             // 'is_active' => true,
