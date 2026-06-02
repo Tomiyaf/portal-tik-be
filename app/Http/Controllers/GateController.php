@@ -324,4 +324,88 @@ class GateController extends Controller
             ],
         ]);
     }
+
+    public function access(Request $request, MqttService $mqtt): JsonResponse
+    {
+        $validated = $this->validateEntryExit($request);
+
+        $pendingMovement = AccessLog::where('user_id', $request->user()->id)
+            ->where('access_status', 'pending')
+            ->whereIn('action', ['entry', 'exit'])
+            ->latest()
+            ->first();
+
+        if ($pendingMovement) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Previous gate access is still pending.',
+            ], 409);
+        }
+
+        $lastMovement = AccessLog::where('user_id', $request->user()->id)
+            ->where('access_status', 'success')
+            ->whereIn('action', ['entry', 'exit'])
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->first();
+
+        $action = $lastMovement && $lastMovement->action === 'entry'
+            ? 'exit'
+            : 'entry';
+
+        $gate = Gate::findOrFail($validated['gate_id']);
+
+        $distance = $this->calculateDistance(
+            $validated['latitude'],
+            $validated['longitude'],
+            $gate->latitude,
+            $gate->longitude
+        );
+
+        if ($distance > $gate->allowed_radius_meter) {
+            return $this->failWithLog(
+                $request,
+                $validated,
+                $action,
+                'User is outside the allowed gate radius. Access denied.',
+                'You are outside the allowed gate radius.'
+            );
+        }
+
+        if ($action === 'entry') {
+            $parkingQuota = ParkingQuota::first();
+
+            $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
+
+            if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
+                return $this->failWithLog(
+                    $request,
+                    $validated,
+                    $action,
+                    'Parking quota is full. Access denied.',
+                    'Parking quota is full. Access denied.'
+                );
+            }
+        }
+
+        $accessLog = $this->createAccessLog([
+            'user_id' => $request->user()->id,
+            'gate_id' => $validated['gate_id'],
+            'access_status' => 'pending',
+            'access_method' => $validated['access_method'],
+            'action' => $action,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        $this->publishAndQueue($accessLog, $mqtt, 'open');
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'action' => $action,
+                'opened_at' => now(),
+                'access_log_id' => $accessLog->id,
+            ],
+        ]);
+    }
 }

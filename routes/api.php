@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('role:mahasiswa')->group(function () {
             Route::post('/entry', [GateController::class, 'entry']);
             Route::post('/exit', [GateController::class, 'exit']);
+            Route::post('/access', [GateController::class, 'access']);
         });
     });
 
