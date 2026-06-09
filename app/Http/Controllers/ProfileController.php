@@ -63,7 +63,7 @@ class ProfileController extends Controller
         return response()->json([
             'success' => true,
             'data' => null,
-            'message' => 'Password updated successfully.',
+            'message' => 'Password berhasil diperbarui.',
         ]);
     }
 }

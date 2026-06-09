@@ -26,7 +26,7 @@ class FailAccessLogAfterTimeout implements ShouldQueue
         }
 
         $accessLog->access_status = 'failed';
-        $accessLog->notes = 'No response from device in 5 seconds.';
+        $accessLog->notes = 'Tidak ada respons dari perangkat dalam waktu 5 detik.';
         $accessLog->save();
     }
 }

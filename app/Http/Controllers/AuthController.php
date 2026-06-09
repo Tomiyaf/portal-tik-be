@@ -22,7 +22,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'data'    => null,
-                'message' => 'Invalid credentials.',
+                'message' => 'Username/password tidak valid.',
             ], 401);
         }
 
@@ -30,7 +30,7 @@ class AuthController extends Controller
             return response()->json([
                 'success' => false,
                 'data'    => null,
-                'message' => 'Account is not active.',
+                'message' => 'Akun Anda belum aktif. Mohon tunggu konfirmasi dari admin.',
             ], 403);
         }
 

@@ -126,7 +126,7 @@ class GateController extends Controller
         if (!$gate) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gate not found.',
+                'message' => 'Gate tidak ditemukan.',
             ], 404);
         }
 
@@ -208,8 +208,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 'entry',
-                'User already entered.',
-                'You have already entered.'
+                'User telah masuk.',
+                'Anda telah masuk.'
             );
         }
 
@@ -226,8 +226,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 'entry',
-                'User is outside the allowed gate radius. Access denied.',
-                'You are outside the allowed gate radius.'
+                'User berada di luar radius gate yang diizinkan. Akses ditolak.',
+                'Anda berada di luar radius gate yang diizinkan.'
             );
         }
 
@@ -239,8 +239,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 'entry',
-                'Parking quota is full. Access denied.',
-                'Parking quota is full. Access denied.'
+                'Quota parkir penuh. Akses ditolak.',
+                'Quota parkir penuh. Akses ditolak.'
             );
         }
 
@@ -281,8 +281,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 'exit',
-                'User already exited.',
-                'You have already exited.'
+                'User telah keluar.',
+                'Anda telah keluar.'
             );
         }
 
@@ -299,8 +299,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 'exit',
-                'User is outside the allowed gate radius. Access denied.',
-                'You are outside the allowed gate radius.'
+                'User berada di luar radius gate yang diizinkan. Akses ditolak.',
+                'Anda berada di luar radius gate yang diizinkan.'
             );
         }
 
@@ -329,18 +329,18 @@ class GateController extends Controller
     {
         $validated = $this->validateEntryExit($request);
 
-        $pendingMovement = AccessLog::where('user_id', $request->user()->id)
-            ->where('access_status', 'pending')
-            ->whereIn('action', ['entry', 'exit'])
-            ->latest()
-            ->first();
+        // $pendingMovement = AccessLog::where('user_id', $request->user()->id)
+        //     ->where('access_status', 'pending')
+        //     ->whereIn('action', ['entry', 'exit'])
+        //     ->latest()
+        //     ->first();
 
-        if ($pendingMovement) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Previous gate access is still pending.',
-            ], 409);
-        }
+        // if ($pendingMovement) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Akses gate sebelumnya masih dalam proses.',
+        //     ], 409);
+        // }
 
         $lastMovement = AccessLog::where('user_id', $request->user()->id)
             ->where('access_status', 'success')
@@ -367,8 +367,8 @@ class GateController extends Controller
                 $request,
                 $validated,
                 $action,
-                'User is outside the allowed gate radius. Access denied.',
-                'You are outside the allowed gate radius.'
+                'User berada di luar radius gate yang diizinkan. Akses ditolak.',
+                'Anda berada di luar radius gate yang diizinkan.'
             );
         }
 
@@ -382,8 +382,8 @@ class GateController extends Controller
                     $request,
                     $validated,
                     $action,
-                    'Parking quota is full. Access denied.',
-                    'Parking quota is full. Access denied.'
+                    'Quota parkir penuh. Akses ditolak.',
+                    'Quota parkir penuh. Akses ditolak.'
                 );
             }
         }

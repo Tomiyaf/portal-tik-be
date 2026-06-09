@@ -71,7 +71,7 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'data' => null,
-                'message' => 'User not found.',
+                'message' => 'User tidak ditemukan.',
             ], 404);
         }
         
@@ -156,20 +156,20 @@ class UserController extends Controller
         if (!$user) {
             return response()->json([
                 'success' => false,
-                'message' => 'User not found.'
+                'message' => 'User tidak ditemukan.',
             ], 404);
         }
 
         if ($user->id === 1) {
             return response()->json([
-                'message' => 'Super Admin cannot be deleted.'
+                'message' => 'Super admin tidak dapat dihapus.',
             ], 403);
         }
 
         $user->delete();
         return response()->json([
             'success' => true,
-            'message' => 'User deleted'
+            'message' => 'User berhasil dihapus.',
         ]);
     }
 
