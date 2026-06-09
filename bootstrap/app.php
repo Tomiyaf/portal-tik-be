@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\AuthenticationException;
 use App\Http\Middleware\RoleMiddleware;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
-use Throwable;
+// use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
