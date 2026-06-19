@@ -139,21 +139,17 @@ services:
   mediamtx:
     image: bluenviron/mediamtx:latest
     container_name: portal_tik_mediamtx
-    env_file:
-      - .env
-    environment:
-      MTX_PATHS_GATE1_SOURCE: publisher
     ports:
       - "8554:8554"
       - "8889:8889"
       - "8189:8189/udp"
       - "8888:8888"
-    # volumes:
-    #   - ./docker/mediamtx/mediamtx.yml:/mediamtx.yml
+      - "9997:9997"
+    volumes:
+      - ./docker/mediamtx/mediamtx.yml:/mediamtx.yml
     restart: unless-stopped
     networks:
       - laravel
-
 
 volumes:
   mysql_data:

@@ -11,6 +11,7 @@ class Cctv extends Model
 
     protected $fillable = [
         'camera_name',
+        'path',
         'stream_url',
         'is_active',
     ];

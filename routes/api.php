@@ -52,7 +52,11 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix("cctv")->group(function () {
-        Route::get('/main', [CctvController::class, 'getMain']);
+        Route::get('/', [CctvController::class, 'index']);
+        Route::get('/{cctv}', [CctvController::class, 'show']);
+        Route::post('/', [CctvController::class, 'store']);
+        Route::patch('/{cctv}', [CctvController::class, 'update']);
+        Route::delete('/{cctv}', [CctvController::class, 'destroy']);
     });
 
     // User management (admin/staff only)

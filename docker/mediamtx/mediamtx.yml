@@ -1,0 +1,17 @@
+api: yes
+apiAddress: :9997
+
+authInternalUsers:
+  - user: any
+    pass: ""
+    permissions:
+      - action: publish
+      - action: read
+      - action: playback
+      - action: api
+      - action: metrics
+      - action: pprof
+
+paths:
+  gate1:
+    source: rtsp://read:unila2026@192.168.124.29:554/Streaming/Channels/102
