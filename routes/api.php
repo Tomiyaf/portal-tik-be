@@ -53,6 +53,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix("cctv")->group(function () {
         Route::get('/', [CctvController::class, 'index']);
+        Route::get('/main', [CctvController::class, 'getMain']);
         Route::get('/{cctv}', [CctvController::class, 'show']);
         Route::post('/', [CctvController::class, 'store']);
         Route::patch('/{cctv}', [CctvController::class, 'update']);
