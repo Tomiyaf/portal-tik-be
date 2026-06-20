@@ -6,7 +6,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\GateController;
 use App\Http\Controllers\AccessLogController;
 use App\Http\Controllers\ParkingQuotaController;
-use App\Http\Controllers\CctvController;
+use App\Http\Controllers\CCTVController;
 use App\Http\Controllers\IotDeviceController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,12 +52,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::prefix("cctv")->group(function () {
-        Route::get('/', [CctvController::class, 'index']);
-        Route::get('/main', [CctvController::class, 'getMain']);
-        Route::get('/{cctv}', [CctvController::class, 'show']);
-        Route::post('/', [CctvController::class, 'store']);
-        Route::patch('/{cctv}', [CctvController::class, 'update']);
-        Route::delete('/{cctv}', [CctvController::class, 'destroy']);
+        Route::get('/', [CCTVController::class, 'index']);
+        Route::get('/main', [CCTVController::class, 'getMain']);
+        Route::get('/{cctv}', [CCTVController::class, 'show']);
+        Route::post('/', [CCTVController::class, 'store']);
+        Route::patch('/{cctv}', [CCTVController::class, 'update']);
+        Route::delete('/{cctv}', [CCTVController::class, 'destroy']);
     });
 
     // User management (admin/staff only)

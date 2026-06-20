@@ -13,10 +13,7 @@ class Cctv extends Model
         'camera_name',
         'path',
         'stream_url',
-        'is_active',
+        'type',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
 }
