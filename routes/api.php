@@ -48,20 +48,24 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('parking-quota')->group(function () {
         Route::get('/', [ParkingQuotaController::class, 'show']);
-        Route::patch('/', [ParkingQuotaController::class, 'update'])->middleware('role:admin,staff');
+        Route::patch('/', [ParkingQuotaController::class, 'update'])->middleware('role:admin');
     });
 
     Route::prefix("cctv")->group(function () {
-        Route::get('/', [CCTVController::class, 'index']);
-        Route::get('/main', [CCTVController::class, 'getMain']);
-        Route::get('/{cctv}', [CCTVController::class, 'show']);
-        Route::post('/', [CCTVController::class, 'store']);
-        Route::patch('/{cctv}', [CCTVController::class, 'update']);
-        Route::delete('/{cctv}', [CCTVController::class, 'destroy']);
+        Route::middleware('role:admin,staff')->group(function () {
+            Route::get('/', [CCTVController::class, 'index']);
+            Route::get('/main', [CCTVController::class, 'getMain']);
+            Route::get('/{cctv}', [CCTVController::class, 'show']);
+        });
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/', [CCTVController::class, 'store']);
+            Route::patch('/{cctv}', [CCTVController::class, 'update']);
+            Route::delete('/{cctv}', [CCTVController::class, 'destroy']);
+        });
     });
 
-    // User management (admin/staff only)
-    Route::middleware('role:admin,staff')->group(function () {
+    // User management (admin only)
+    Route::middleware('role:admin')->group(function () {
         Route::apiResource('users', UserController::class);
         Route::get('/users/{user}/ktm', [UserController::class, 'previewKtm'])
         ->name('users.ktm.preview');
