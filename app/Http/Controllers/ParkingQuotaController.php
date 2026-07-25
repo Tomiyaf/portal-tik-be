@@ -25,16 +25,18 @@ class ParkingQuotaController extends Controller
 
     public function update(Request $request)
     {
+        $quota = ParkingQuota::first();
+        $minTotalSlots = $quota ? $quota->used_slots : 0;
+
         $data = $request->validate([
-            'total_slots' => ['sometimes', 'integer', 'min:0'],
-            // 'used_slots' => ['required', 'integer', 'min:0', 'lte:total_slots'],
-            // 'status' => ['required', Rule::in(['available', 'nearly_full', 'full'])],
+            'total_slots' => ['sometimes', 'integer', 'min:' . $minTotalSlots],
             'auto_restrict_student' => ['sometimes', 'boolean'],
         ]);
 
-        $quota = ParkingQuota::first();
-        $quota->update($data);
-        $quota->refresh();
+        if ($quota) {
+            $quota->update($data);
+            $quota->refresh();
+        }
 
         return response()->json([
             'success' => true,
