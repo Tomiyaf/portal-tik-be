@@ -35,12 +35,12 @@ class UserController extends Controller
 
         // Search (by full_name, email, npm_nip, phone_number)
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = addcslashes($request->search, '%_');
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'like', "%$search%")
-                  ->orWhere('email', 'like', "%$search%")
-                  ->orWhere('npm_nip', 'like', "%$search%")
-                  ->orWhere('phone_number', 'like', "%$search%") ;
+                $q->where('full_name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('npm_nip', 'like', "%{$search}%")
+                  ->orWhere('phone_number', 'like', "%{$search}%");
             });
         }
 
@@ -97,9 +97,9 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'full_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'npm_nip' => 'required|string|unique:users,npm_nip',
+            'email' => 'required|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8',
+            'npm_nip' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\-]+$/', 'unique:users,npm_nip'],
             'phone_number' => 'nullable|string|max:20',
             'role' => ['required', Rule::in(['admin', 'staff', 'mahasiswa'])],
             'status' => ['required', Rule::in(['pending', 'active', 'suspended'])],
@@ -107,6 +107,11 @@ class UserController extends Controller
             'ktm_path' => 'nullable|string',
             'last_login_at' => 'nullable|date',
         ]);
+
+        if (!empty($validated['ktm_path'])) {
+            $validated['ktm_path'] = 'ktm/' . basename($validated['ktm_path']);
+        }
+
         $validated['password'] = Hash::make($validated['password']);
         $user = User::create($validated);
         return response()->json([
@@ -122,19 +127,21 @@ class UserController extends Controller
         $validated = $request->validate([
             'full_name' => 'sometimes|required|string|max:255',
             'email' => [
-                'sometimes', 'required', 'email', Rule::unique('users')->ignore($user->id)
+                'sometimes', 'required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)
             ],
             'password' => 'nullable|string|min:8',
             'npm_nip' => [
-                'sometimes', 'required', Rule::unique('users')->ignore($user->id)
+                'sometimes', 'required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\-]+$/', Rule::unique('users')->ignore($user->id)
             ],
             'phone_number' => 'sometimes|nullable|string|max:20',
             'role' => ['sometimes', 'required', Rule::in(['admin', 'staff', 'mahasiswa'])],
             'status' => ['sometimes', 'required', Rule::in(['pending', 'active', 'suspended'])],
-            // 'profile_photo' => 'nullable|string',
             'ktm_path' => 'sometimes|nullable|string',
-            // 'last_login_at' => 'nullable|date',
         ]);
+
+        if (!empty($validated['ktm_path'])) {
+            $validated['ktm_path'] = 'ktm/' . basename($validated['ktm_path']);
+        }
 
         if (!empty($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);
@@ -179,8 +186,18 @@ class UserController extends Controller
             return response()->noContent();
         }
 
-        return response()->file(Storage::path($user->ktm_path), [
-            'Content-Type' => Storage::mimeType($user->ktm_path),
+        $filename = basename($user->ktm_path);
+        $safePath = 'ktm/' . $filename;
+
+        if (!Storage::disk('local')->exists($safePath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File KTM tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->file(Storage::disk('local')->path($safePath), [
+            'Content-Type' => Storage::disk('local')->mimeType($safePath),
             'Content-Disposition' => 'inline',
         ]);
     }
