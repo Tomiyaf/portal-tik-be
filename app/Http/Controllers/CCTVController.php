@@ -106,8 +106,8 @@ class CCTVController extends Controller
     {
         $validated = $request->validate([
             'camera_name' => ['required', 'string', 'max:255'],
-            'path' => ['required', 'string', 'max:255', 'unique:cctvs,path'],
-            'stream_url' => ['required', 'string'],
+            'path' => ['required', 'string', 'max:100', 'regex:/^[a-zA-Z0-9_\-]+$/', 'unique:cctvs,path'],
+            'stream_url' => ['required', 'string', 'regex:/^(rtsp|rtsps|http|https):\/\/[^\r\n]+$/i'],
             'type' => ['required', Rule::in(['monitor', 'intercom'])],
         ]);
 
@@ -130,11 +130,12 @@ class CCTVController extends Controller
                 'sometimes',
                 'required',
                 'string',
-                'max:255',
+                'max:100',
+                'regex:/^[a-zA-Z0-9_\-]+$/',
                 Rule::unique('cctvs', 'path')->ignore($cctv->id),
             ],
 
-            'stream_url' => ['sometimes', 'required', 'string'],
+            'stream_url' => ['sometimes', 'required', 'string', 'regex:/^(rtsp|rtsps|http|https):\/\/[^\r\n]+$/i'],
 
             'type' => [
                 'sometimes',
