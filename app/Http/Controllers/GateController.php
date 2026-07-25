@@ -59,7 +59,7 @@ class GateController extends Controller
         return $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
             'access_method' => ['required', Rule::in(['mobile', 'web', 'desktop'])],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
     }
 
@@ -68,7 +68,7 @@ class GateController extends Controller
         return $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
             'access_method' => ['required', Rule::in(['mobile', 'web', 'desktop'])],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:500'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
         ]);
@@ -119,7 +119,7 @@ class GateController extends Controller
             'gate_name' => 'sometimes|required|string|max:255',
             'latitude' => 'sometimes|required|numeric|between:-90,90',
             'longitude' => 'sometimes|required|numeric|between:-180,180',
-            'allowed_radius_meter' => 'sometimes|required|integer|min:0',
+            'allowed_radius_meter' => 'sometimes|required|integer|min:1|max:10000',
         ]);
 
         $gate = Gate::first();
@@ -168,7 +168,7 @@ class GateController extends Controller
         $validated = $request->validate([
             'gate_id' => ['required', 'integer', 'exists:gates,id'],
             'access_method' => ['required', Rule::in(['mobile', 'web', 'desktop'])],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:500'],
         ]);
 
         $accessLog = $this->createAccessLog([
