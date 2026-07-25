@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email' => ['required', 'email', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
@@ -55,7 +55,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'full_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'npm_nip' => ['required', 'string', 'max:50', 'unique:users,npm_nip'],
+            'npm_nip' => ['required', 'string', 'max:50', 'regex:/^[a-zA-Z0-9_\-]+$/', 'unique:users,npm_nip'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
             'ktm' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
