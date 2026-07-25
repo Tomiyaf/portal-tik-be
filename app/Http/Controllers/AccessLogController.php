@@ -11,13 +11,13 @@ class AccessLogController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-        'search' => ['sometimes', 'string', 'max:255'],
-        'period' => ['sometimes', Rule::in(['24h', '7d', '30d'])],
-        'access_status' => ['sometimes', Rule::in(['success', 'pending', 'failed'])],
-        'access_method' => ['sometimes', Rule::in(['mobile', 'web', 'desktop'])],
-        'action' => ['sometimes', Rule::in(['open', 'close', 'entry', 'exit'])],
-        'sort_order' => ['sometimes', Rule::in(['asc', 'desc'])],
-        'per_page' => ['sometimes', 'integer', 'min:1'],
+            'search' => ['sometimes', 'string', 'max:255'],
+            'period' => ['sometimes', Rule::in(['24h', '7d', '30d'])],
+            'access_status' => ['sometimes', Rule::in(['success', 'pending', 'failed'])],
+            'access_method' => ['sometimes', Rule::in(['mobile', 'web', 'desktop'])],
+            'action' => ['sometimes', Rule::in(['open', 'close', 'entry', 'exit'])],
+            'sort_order' => ['sometimes', Rule::in(['asc', 'desc'])],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
         $query = AccessLog::with('user:id,full_name,role');
@@ -47,7 +47,7 @@ class AccessLogController extends Controller
         }
 
         if ($request->filled('search')) {
-            $search = $request->search;
+            $search = addcslashes($request->search, '%_');
             $query->where(function ($q) use ($search) {
                 $q->where('notes', 'like', "%{$search}%")
                     ->orWhere('action', 'like', "%{$search}%")
