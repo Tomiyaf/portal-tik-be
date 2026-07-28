@@ -73,7 +73,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::prefix('access-logs')->group(function () {
         Route::get('/', [AccessLogController::class, 'index'])->middleware('role:admin,staff');
-        Route::get('/last-opened', [AccessLogController::class, 'lastOpened']);
+        Route::get('/last-opened', [AccessLogController::class, 'lastOpened'])->middleware('role:admin,staff');
     });
 
     Route::prefix('iot-device')->group(function () {
