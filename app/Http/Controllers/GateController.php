@@ -9,6 +9,7 @@ use App\Models\ParkingQuota;
 use App\Services\MqttService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class GateController extends Controller
@@ -231,17 +232,22 @@ class GateController extends Controller
             );
         }
 
-        $parkingQuota = ParkingQuota::first();
-        $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
+        $parkingQuota = DB::transaction(function () {
+            return ParkingQuota::lockForUpdate()->first();
+        });
 
-        if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
-            return $this->failWithLog(
-                $request,
-                $validated,
-                'entry',
-                'Quota parkir penuh. Akses ditolak.',
-                'Quota parkir penuh. Akses ditolak.'
-            );
+        if ($parkingQuota) {
+            $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
+
+            if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
+                return $this->failWithLog(
+                    $request,
+                    $validated,
+                    'entry',
+                    'Quota parkir penuh. Akses ditolak.',
+                    'Quota parkir penuh. Akses ditolak.'
+                );
+            }
         }
 
         $accessLog = $this->createAccessLog([
@@ -373,18 +379,22 @@ class GateController extends Controller
         }
 
         if ($action === 'entry') {
-            $parkingQuota = ParkingQuota::first();
+            $parkingQuota = DB::transaction(function () {
+                return ParkingQuota::lockForUpdate()->first();
+            });
 
-            $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
+            if ($parkingQuota) {
+                $availableSlots = $parkingQuota->total_slots - $parkingQuota->used_slots;
 
-            if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
-                return $this->failWithLog(
-                    $request,
-                    $validated,
-                    $action,
-                    'Quota parkir penuh. Akses ditolak.',
-                    'Quota parkir penuh. Akses ditolak.'
-                );
+                if ($availableSlots <= 0 && $parkingQuota->auto_restrict_student) {
+                    return $this->failWithLog(
+                        $request,
+                        $validated,
+                        $action,
+                        'Quota parkir penuh. Akses ditolak.',
+                        'Quota parkir penuh. Akses ditolak.'
+                    );
+                }
             }
         }
 
