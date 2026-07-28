@@ -17,7 +17,7 @@ class AccessLogController extends Controller
             'access_method' => ['sometimes', Rule::in(['mobile', 'web', 'desktop'])],
             'action' => ['sometimes', Rule::in(['open', 'close', 'entry', 'exit'])],
             'sort_order' => ['sometimes', Rule::in(['asc', 'desc'])],
-            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:200'],
         ]);
 
         $query = AccessLog::with(['user:id,full_name,role', 'gate:id,gate_name']);
