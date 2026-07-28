@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use PhpMqtt\Client\ConnectionSettings;
 use PhpMqtt\Client\MqttClient;
 use App\Models\AccessLog;
@@ -69,31 +70,33 @@ Artisan::command('mqtt:listen', function () {
                     return;
                 }
 
-                $accessLog->access_status = $normalizedStatus;
+                DB::transaction(function () use ($accessLog, $normalizedStatus, $notes, $previousStatus) {
+                    $accessLog->access_status = $normalizedStatus;
 
-                if (is_string($notes) && $notes !== '') {
-                    $accessLog->notes = $notes;
-                }
+                    if (is_string($notes) && $notes !== '') {
+                        $accessLog->notes = $notes;
+                    }
 
-                $accessLog->save();
+                    $accessLog->save();
 
-                if ($previousStatus !== 'success' && $normalizedStatus === 'success') {
-                    $quota = ParkingQuota::first();
+                    if ($previousStatus !== 'success' && $normalizedStatus === 'success') {
+                        $quota = ParkingQuota::lockForUpdate()->first();
 
-                    if ($quota) {
-                        if ($accessLog->action === 'entry') {
-                            ParkingQuota::where('id', $quota->id)
-                                ->whereColumn('used_slots', '<', 'total_slots')
-                                ->increment('used_slots');
-                        }
+                        if ($quota) {
+                            if ($accessLog->action === 'entry') {
+                                ParkingQuota::where('id', $quota->id)
+                                    ->whereColumn('used_slots', '<', 'total_slots')
+                                    ->increment('used_slots');
+                            }
 
-                        if ($accessLog->action === 'exit') {
-                            ParkingQuota::where('id', $quota->id)
-                                ->where('used_slots', '>', 0)
-                                ->decrement('used_slots');
+                            if ($accessLog->action === 'exit') {
+                                ParkingQuota::where('id', $quota->id)
+                                    ->where('used_slots', '>', 0)
+                                    ->decrement('used_slots');
+                            }
                         }
                     }
-                }
+                });
             }, 1);
 
             // 2. Listen status ESP: online / offline
