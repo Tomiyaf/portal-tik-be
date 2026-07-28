@@ -20,7 +20,7 @@ class AccessLogController extends Controller
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = AccessLog::with('user:id,full_name,role');
+        $query = AccessLog::with(['user:id,full_name,role', 'gate:id,gate_name']);
 
         if ($request->filled('period')) {
             $from = match ($request->period) {
