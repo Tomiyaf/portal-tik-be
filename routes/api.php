@@ -64,11 +64,18 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
 
-    // User management (admin only)
-    Route::middleware('role:admin')->group(function () {
-        Route::apiResource('users', UserController::class);
-        Route::get('/users/{user}/ktm', [UserController::class, 'previewKtm'])
-        ->name('users.ktm.preview');
+    Route::prefix('users')->group(function () {
+        Route::middleware('role:admin,staff')->group(function () {
+            Route::get('/', [UserController::class, 'index']);
+            Route::get('/{user}', [UserController::class, 'show']);
+            Route::get('/{user}/ktm', [UserController::class, 'previewKtm'])->name('users.ktm.preview');
+        });
+        Route::middleware('role:admin')->group(function () {
+            Route::post('/', [UserController::class, 'store']);
+            Route::put('/{user}', [UserController::class, 'update']);
+            Route::patch('/{user}', [UserController::class, 'update']);
+            Route::delete('/{user}', [UserController::class, 'destroy']);
+        });
     });
 
     Route::prefix('access-logs')->group(function () {
